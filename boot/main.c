@@ -39,14 +39,11 @@ void
 bootmain(void)
 {
 	struct Proghdr *ph, *eph;
-
 	// read 1st page off disk
 	readseg((uint32_t) ELFHDR, SECTSIZE*8, 0);
-
 	// is this a valid ELF?
 	if (ELFHDR->e_magic != ELF_MAGIC)
 		goto bad;
-
 	// load each program segment (ignores ph flags)
 	ph = (struct Proghdr *) ((uint8_t *) ELFHDR + ELFHDR->e_phoff);
 	eph = ph + ELFHDR->e_phnum;
@@ -54,11 +51,9 @@ bootmain(void)
 		// p_pa is the load address of this segment (as well
 		// as the physical address)
 		readseg(ph->p_pa, ph->p_memsz, ph->p_offset);
-
 	// call the entry point from the ELF header
 	// note: does not return!
 	((void (*)(void)) (ELFHDR->e_entry))();
-
 bad:
 	outw(0x8A00, 0x8A00);
 	outw(0x8A00, 0x8E00);
@@ -115,6 +110,7 @@ readsect(void *dst, uint32_t offset)
 	outb(0x1F5, offset >> 16);
 	outb(0x1F6, (offset >> 24) | 0xE0);
 	outb(0x1F7, 0x20);	// cmd 0x20 - read sectors
+
 
 	// wait for disk to be ready
 	waitdisk();
