@@ -125,7 +125,7 @@ fork(void)
 	// extern unsigned char end[];
 	// for ((uint8_t *) addr = UTEXT; addr < end; addr += PGSIZE)
 	for (uintptr_t addr = UTEXT; addr < USTACKTOP; addr += PGSIZE) {
-		if ( (uvpd[PDX(addr)] & PTE_P) && (uvpt[PGNUM(addr)] & PTE_P) ) {
+		if ( (uvpd[PDX(addr)] & PTE_P) && (uvpt[PGNUM(addr)] & PTE_P) && (uvpt[PGNUM(addr)] & PTE_U)) {
 			// dup page to child
 			duppage(e_id, PGNUM(addr));
 		}
