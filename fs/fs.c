@@ -61,10 +61,12 @@ alloc_block(void)
 	// The bitmap consists of one or more blocks.  A single bitmap block
 	// contains the in-use bits for BLKBITSIZE blocks.  There are
 	// super->s_nblocks blocks in the disk altogether.
-	for(int blockno = 0;blockno < super->s_nblocks; blockno++){
+	int blockno;
+	for(blockno = 0;blockno < super->s_nblocks; blockno++){
 		if(block_is_free(blockno)){
-			bitmap[blockno / 32] &= 0<<(blockno % 32);
-			flush_block(diskaddr(2));
+			bitmap[blockno / 32] &= ~(1<<(blockno % 32));
+			for (int i = 0; i * BLKBITSIZE < super->s_nblocks; i++)
+				flush_block(diskaddr(2+i));
 			return blockno;
 		}
 	}
@@ -157,7 +159,7 @@ file_block_walk(struct File *f, uint32_t filebno, uint32_t **ppdiskbno, bool all
        		if((r = alloc_block()) < 0)
        			return r;
        		f->f_indirect = r;
-       		memset(diskaddr(r), 0, BLKBITSIZE);
+       		memset(diskaddr(r), 0, BLKSIZE);
        		flush_block(diskaddr(r)); 
        		*ppdiskbno = (uint32_t *)diskaddr(r) + (filebno - NDIRECT); 
        	}
@@ -181,16 +183,12 @@ file_get_block(struct File *f, uint32_t filebno, char **blk)
 	uint32_t *ppdiskbno;
 	int blockno;
 	if((r = file_block_walk(f, filebno, &ppdiskbno, 1))<0)
-	{	
-		cprintf("r: %d\n", r);
 		return r;
-	}
 	if(*ppdiskbno==0){
 		if((blockno = alloc_block())<0)
 			return blockno;
 		*ppdiskbno = blockno;
-		if(blk)
-			*blk = diskaddr(blockno);
+		*blk = diskaddr(blockno);
 	}
 	else
 		*blk = diskaddr(*ppdiskbno);	
