@@ -301,6 +301,25 @@ map_segment(envid_t child, uintptr_t va, size_t memsz,
 static int
 copy_shared_pages(envid_t child)
 {
+	int r;
+	envid_t this_env_id = sys_getenvid();
+	// parent
+	// extern unsigned char end[];
+	// for ((uint8_t *) addr = UTEXT; addr < end; addr += PGSIZE)
+	for (uintptr_t addr = UTEXT; addr < USTACKTOP; addr += PGSIZE) {
+		int pn = addr/PGSIZE;
+		if ( (uvpd[PDX(addr)] & PTE_P) && (uvpt[PGNUM(addr)] & PTE_P) ) {
+			void * va = (void *)(pn * PGSIZE);
+			int perm = uvpt[pn];
+			if((perm & PTE_SHARE)){
+				perm &= PTE_SYSCALL;
+				if((r = sys_page_map(this_env_id, va, child, va, perm)) < 0) 
+					panic("duppage: %e",r);
+				if((r = sys_page_map(this_env_id, va, this_env_id, va, perm)) < 0) 
+					panic("duppage: %e",r);
+			}
+		}
+	}
 	// LAB 5: Your code here.
 	return 0;
 }

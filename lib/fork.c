@@ -72,12 +72,14 @@ duppage(envid_t envid, unsigned pn)
 	envid_t this_env_id = sys_getenvid();
 	void * va = (void *)(pn * PGSIZE);
 
-	int perm = uvpt[pn] & 0xFFF;
-	if ( (perm & PTE_W) || (perm & PTE_COW) ) {
+	int perm = uvpt[pn] & PTE_SYSCALL;
+	
+	if ( ((perm & PTE_W) || (perm & PTE_COW)) && (!(perm & PTE_SHARE))) {
 		// marked as COW and read-only
 		perm |= PTE_COW;
 		perm &= ~PTE_W;
 	}
+
 	// IMPORTANT: adjust permission to the syscall
 	perm &= PTE_SYSCALL;
 	// cprintf("fromenvid = %x, toenvid = %x, dup page %d, addr = %08p, perm = %03x\n",this_env_id, envid, pn, va, perm);

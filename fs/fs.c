@@ -63,8 +63,9 @@ alloc_block(void)
 	// super->s_nblocks blocks in the disk altogether.
 	for(int blockno = 0;blockno < super->s_nblocks; blockno++){
 		if(block_is_free(blockno)){
-			bitmap[blockno / 32] &= 0<<(blockno % 32);
-			flush_block(diskaddr(2));
+			bitmap[blockno / 32] &= ~(1<<(blockno % 32));
+			for(int i =0;i * BLKBITSIZE < super->s_nblocks;i++)
+				flush_block(diskaddr(i+2));
 			return blockno;
 		}
 	}
@@ -157,7 +158,7 @@ file_block_walk(struct File *f, uint32_t filebno, uint32_t **ppdiskbno, bool all
        		if((r = alloc_block()) < 0)
        			return r;
        		f->f_indirect = r;
-       		memset(diskaddr(r), 0, BLKBITSIZE);
+       		memset(diskaddr(r), 0, BLKSIZE);
        		flush_block(diskaddr(r)); 
        		*ppdiskbno = (uint32_t *)diskaddr(r) + (filebno - NDIRECT); 
        	}
