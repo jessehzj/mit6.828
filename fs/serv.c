@@ -249,7 +249,8 @@ serve_write(envid_t envid, struct Fsreq_write *req)
 	if (debug)
 		cprintf("serve_write %08x %08x %08x\n", envid, req->req_fileid, req->req_n);
 	int r;
-	struct OpenFile *o;
+
+	struct OpenFile *o = NULL;
 	/*
 	struct OpenFile {
 	uint32_t o_fileid;	// file id
@@ -257,6 +258,7 @@ serve_write(envid_t envid, struct Fsreq_write *req)
 	int o_mode;		// open mode
 	struct Fd *o_fd;	// Fd page
 	};
+<<<<<<< HEAD
 	int
 	file_write(struct File *f, const void *buf, size_t count, off_t offset)
 	*/
@@ -276,6 +278,20 @@ serve_write(envid_t envid, struct Fsreq_write *req)
 	o->o_fd->fd_offset += r;
 	return r;
 
+	if ((r = openfile_lookup(envid, req->req_fileid, &o)) < 0)
+		return r;
+	if (o->o_fd->fd_offset + req->req_n > o->o_file->f_size)
+		file_set_size(o->o_file, o->o_fd->fd_offset + req->req_n);
+
+	/*
+	static ssize_t
+	devfile_write(struct Fd *fd, const void *buf, size_t n)
+	*/	
+	r = file_write(o->o_file, req->req_buf, req->req_n, o->o_fd->fd_offset);
+	if(r<0)
+		return r;
+	o->o_fd->fd_offset += r;
+	return r;
 	// LAB 5: Your code here.
 	//panic("serve_write not implemented");
 }

@@ -144,6 +144,9 @@ devfile_write(struct Fd *fd, const void *buf, size_t n)
 	int r;
 
 	fsipcbuf.write.req_fileid = fd->fd_file.id;
+
+	n = n>(PGSIZE - (sizeof(int) + sizeof(size_t)))?(PGSIZE - (sizeof(int) + sizeof(size_t))):n;
+
 	fsipcbuf.write.req_n = n;
 	memmove(fsipcbuf.write.req_buf, buf, n);
 	if ((r = fsipc(FSREQ_WRITE, NULL)) < 0)
@@ -151,6 +154,9 @@ devfile_write(struct Fd *fd, const void *buf, size_t n)
 	assert(r <= n);
 	assert(r <= PGSIZE);
 	return r;
+
+	//panic("devfile_write not implemented");
+
 }
 
 static int
