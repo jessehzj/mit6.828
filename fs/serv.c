@@ -207,14 +207,35 @@ serve_set_size(envid_t envid, struct Fsreq_set_size *req)
 int
 serve_read(envid_t envid, union Fsipc *ipc)
 {
+	int r;
 	struct Fsreq_read *req = &ipc->read;
 	struct Fsret_read *ret = &ipc->readRet;
-
+	struct OpenFile *o;
+	/*
+	struct OpenFile {
+	uint32_t o_fileid;	// file id
+	struct File *o_file;	// mapped descriptor for open file
+	int o_mode;		// open mode
+	struct Fd *o_fd;	// Fd page
+	};
+	*/
+	int count = req->req_n;
 	if (debug)
 		cprintf("serve_read %08x %08x %08x\n", envid, req->req_fileid, req->req_n);
-
+	// Every file system IPC call has the same general structure.
+	// Here's how it goes.
+	// First, use openfile_lookup to find the relevant open file.
+	// On failure, return the error code to the client with ipc_send.
+	if ((r = openfile_lookup(envid, req->req_fileid, &o)) < 0)
+		return r;
+	// Second, call the relevant file system function (from fs/fs.c).
+	// On failure, return the error code to the client.
+	r = file_read(o->o_file, ret->ret_buf, count, o->o_fd->fd_offset);
+	if(r<=0)
+		return r;
+	o->o_fd->fd_offset += r;
+	return r;
 	// Lab 5: Your code here:
-	return 0;
 }
 
 
@@ -227,9 +248,52 @@ serve_write(envid_t envid, struct Fsreq_write *req)
 {
 	if (debug)
 		cprintf("serve_write %08x %08x %08x\n", envid, req->req_fileid, req->req_n);
+	int r;
 
+	struct OpenFile *o = NULL;
+	/*
+	struct OpenFile {
+	uint32_t o_fileid;	// file id
+	struct File *o_file;	// mapped descriptor for open file
+	int o_mode;		// open mode
+	struct Fd *o_fd;	// Fd page
+	};
+<<<<<<< HEAD
+	int
+	file_write(struct File *f, const void *buf, size_t count, off_t offset)
+	*/
+	if (debug)
+		cprintf("serve_read %08x %08x %08x\n", envid, req->req_fileid, req->req_n);
+
+	if ((r = openfile_lookup(envid, req->req_fileid, &o)) < 0)
+		return r;
+	// Second, call the relevant file system function (from fs/fs.c).
+	// On failure, return the error code to the client.
+	if(o->o_fd->fd_offset+req->req_n > o->o_file->f_size)
+		r = file_set_size(o->o_file, o->o_fd->fd_offset + req->req_n);
+		
+	r = file_write(o->o_file, req->req_buf, req->req_n, o->o_fd->fd_offset);
+	if(r<=0)
+		return r;
+	o->o_fd->fd_offset += r;
+	return r;
+
+	if ((r = openfile_lookup(envid, req->req_fileid, &o)) < 0)
+		return r;
+	if (o->o_fd->fd_offset + req->req_n > o->o_file->f_size)
+		file_set_size(o->o_file, o->o_fd->fd_offset + req->req_n);
+
+	/*
+	static ssize_t
+	devfile_write(struct Fd *fd, const void *buf, size_t n)
+	*/	
+	r = file_write(o->o_file, req->req_buf, req->req_n, o->o_fd->fd_offset);
+	if(r<0)
+		return r;
+	o->o_fd->fd_offset += r;
+	return r;
 	// LAB 5: Your code here.
-	panic("serve_write not implemented");
+	//panic("serve_write not implemented");
 }
 
 // Stat ipc->stat.req_fileid.  Return the file's struct Stat to the

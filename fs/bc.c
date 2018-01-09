@@ -47,8 +47,13 @@ bc_pgfault(struct UTrapframe *utf)
 	// Hint: first round addr to page boundary. fs/ide.c has code to read
 	// the disk.
 	//
+	addr =ROUNDDOWN(addr, PGSIZE);
 	// LAB 5: you code here:
-
+	if(sys_page_alloc(0, addr, PTE_P | PTE_U | PTE_W)<0)
+		panic("sys_page_alloc failed!\n");
+	if(ide_read(blockno*BLKSECTS, addr, BLKSECTS)!=0)
+		panic("ide_read failed!\n");
+	
 	// Clear the dirty bit for the disk block page since we just read the
 	// block from disk
 	if ((r = sys_page_map(0, addr, 0, addr, uvpt[PGNUM(addr)] & PTE_SYSCALL)) < 0)
@@ -72,12 +77,18 @@ void
 flush_block(void *addr)
 {
 	uint32_t blockno = ((uint32_t)addr - DISKMAP) / BLKSIZE;
-
+	addr = ROUNDDOWN(addr, PGSIZE);
 	if (addr < (void*)DISKMAP || addr >= (void*)(DISKMAP + DISKSIZE))
 		panic("flush_block of bad va %08x", addr);
-
+	if(va_is_mapped(addr)==1&&va_is_dirty(addr)==1){
+		if(ide_write(blockno*BLKSECTS, addr, BLKSECTS)<0)
+			panic("ide_write failed\n");
+		if(sys_page_map(0, addr,0, addr, PTE_SYSCALL)!=0)
+			panic("sys_page_map() failed\n");
+	}
+	
 	// LAB 5: Your code here.
-	panic("flush_block not implemented");
+	//panic("flush_block not implemented");
 }
 
 // Test that the block cache works, by smashing the superblock and

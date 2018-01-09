@@ -26,7 +26,7 @@
 #    - it does not need to enable A20
 #    - it uses MPBOOTPHYS to calculate absolute addresses of its
 #      symbols, rather than relying on the linker to fill them
-
+#2017/11/27  
 #define RELOC(x) ((x) - KERNBASE)
 #define MPBOOTPHYS(s) ((s) - mpentry_start + MPENTRY_PADDR)
 
