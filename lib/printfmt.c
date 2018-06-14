@@ -87,14 +87,17 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 	unsigned long long num;
 	int base, lflag, width, precision, altflag;
 	char padc;
-
+	int text_attribute = 0;
+	int color = 0;
 	while (1) {
-		while ((ch = *(unsigned char *) fmt++) != '%') {
+		while ((ch = *(unsigned char *) fmt++) != '%'&&ch != '\033') {
 			if (ch == '\0')
 				return;
-			putch(ch, putdat);
+			putch(ch | text_attribute, putdat);
 		}
-
+		if(ch=='\033'){
+			color = 1;
+		}
 		// Process a %-escape sequence
 		padc = ' ';
 		width = -1;
@@ -113,7 +116,29 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 		case '0':
 			padc = '0';
 			goto reswitch;
-
+		case '[':
+			//printf("\033[31mThis text is red \033[0mThis text has default color\n"); 
+			if(color==1){
+				for (; ; fmt++) {
+					ch = *fmt;
+					if (!(ch>='0'&&ch<='9')&&ch!='m'){
+						text_attribute = 0<<8;
+						fmt++;
+						break;
+					}
+					else{
+						if (ch=='m'){
+							text_attribute = color<<8;
+							fmt++;
+							break;
+						}
+						else{
+							text_attribute = text_attribute * 10 + ch - '0';
+						}
+					}
+				}	
+			}
+			break;
 		// width field
 		case '1':
 		case '2':
@@ -157,7 +182,7 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 
 		// character
 		case 'c':
-			putch(va_arg(ap, int), putdat);
+			putch(va_arg(ap, int)|text_attribute, putdat);
 			break;
 
 		// error message
@@ -177,14 +202,14 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 				p = "(null)";
 			if (width > 0 && padc != '-')
 				for (width -= strnlen(p, precision); width > 0; width--)
-					putch(padc, putdat);
+					putch(padc|text_attribute, putdat);
 			for (; (ch = *p++) != '\0' && (precision < 0 || --precision >= 0); width--)
 				if (altflag && (ch < ' ' || ch > '~'))
-					putch('?', putdat);
+					putch('?'|text_attribute, putdat);
 				else
-					putch(ch, putdat);
+					putch(ch|text_attribute, putdat);
 			for (; width > 0; width--)
-				putch(' ', putdat);
+				putch(' '|text_attribute, putdat);
 			break;
 
 		// (signed) decimal
