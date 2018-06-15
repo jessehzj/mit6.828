@@ -96,6 +96,7 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 			putch(ch | text_attribute, putdat);
 		}
 		if(ch=='\033'){
+			text_attribute = 0;
 			color = 1;
 		}
 		// Process a %-escape sequence
@@ -122,13 +123,13 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 				for (; ; fmt++) {
 					ch = *fmt;
 					if (!(ch>='0'&&ch<='9')&&ch!='m'){
-						text_attribute = 0<<8;
+						text_attribute = 0;
 						fmt++;
 						break;
 					}
 					else{
 						if (ch=='m'){
-							text_attribute = color<<8;
+							text_attribute = (text_attribute<<8)&~0xff;
 							fmt++;
 							break;
 						}

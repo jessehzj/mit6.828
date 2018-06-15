@@ -146,9 +146,10 @@ monitor(struct Trapframe *tf)
 
 	cprintf("Welcome to the JOS kernel monitor!\n");
 	cprintf("Type 'help' for a list of commands.\n");
-	cprintf("\033[31mThis text is red\n");
-	cprintf("\033[42mThis text is red\n");
-	cprintf("This text is red\n"); 
+	cprintf("\033[04mThis text is red\n");
+	cprintf("\033[05mThis text is purple\n");
+	cprintf("This text is default setting\n"); 
+
 /*
 	cprintf("x=%d y=%x", 3);
 	int x = 1, y = 3, z = 4;
