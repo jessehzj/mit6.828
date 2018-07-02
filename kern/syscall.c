@@ -285,44 +285,6 @@ sys_page_unmap(envid_t envid, void *va)
 	//panic("sys_page_unmap not implemented");
 }
 
-// Try to send 'value' to the target env 'envid'.
-// If srcva < UTOP, then also send page currently mapped at 'srcva',
-// so that receiver gets a duplicate mapping of the same page.
-//
-// The send fails with a return value of -E_IPC_NOT_RECV if the
-// target is not blocked, waiting for an IPC.
-//
-// The send also can fail for the other reasons listed below.
-//
-// Otherwise, the send succeeds, and the target's ipc fields are
-// updated as follows:
-//    env_ipc_recving is set to 0 to block future sends;
-//    env_ipc_from is set to the sending envid;
-//    env_ipc_value is set to the 'value' parameter;
-//    env_ipc_perm is set to 'perm' if a page was transferred, 0 otherwise.
-// The target environment is marked runnable again, returning 0
-// from the paused sys_ipc_recv system call.  (Hint: does the
-// sys_ipc_recv function ever actually return?)
-//
-// If the sender wants to send a page but the receiver isn't asking for one,
-// then no page mapping is transferred, but no error occurs.
-// The ipc only happens when no errors occur.
-//
-// Returns 0 on success, < 0 on error.
-// Errors are:
-//	-E_BAD_ENV if environment envid doesn't currently exist.
-//		(No need to check permissions.)
-//	-E_IPC_NOT_RECV if envid is not currently blocked in sys_ipc_recv,
-//		or another environment managed to send first.
-//	-E_INVAL if srcva < UTOP but srcva is not page-aligned.
-//	-E_INVAL if srcva < UTOP and perm is inappropriate
-//		(see sys_page_alloc).
-//	-E_INVAL if srcva < UTOP but srcva is not mapped in the caller's
-//		address space.
-//	-E_INVAL if (perm & PTE_W), but srcva is read-only in the
-//		current environment's address space.
-//	-E_NO_MEM if there's not enough memory to map srcva in envid's
-//		address space.
 static int
 sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 {
