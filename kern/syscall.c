@@ -329,16 +329,19 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 		env->env_ipc_perm = perm;
 		
 	}	
+	else
+		env->env_ipc_perm = 0;
 	env->env_ipc_recving = 0;
 	env->env_ipc_from = curenv->env_id;
 	env->env_ipc_value = value;
-	env->env_ipc_perm = 0;
+					   
 	env->env_tf.tf_regs.reg_eax = 0;
 	env->env_status = ENV_RUNNABLE;
 	return 0;
 	// LAB 4: Your code here.
 	//panic("sys_ipc_try_send not implemented");
 }
+
 
 // Block until a value is ready.  Record that you want to receive
 // using the env_ipc_recving and env_ipc_dstva fields of struct Env,
