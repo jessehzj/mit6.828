@@ -334,7 +334,7 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 	env->env_ipc_recving = 0;
 	env->env_ipc_from = curenv->env_id;
 	env->env_ipc_value = value;
-					   
+		
 	env->env_tf.tf_regs.reg_eax = 0;
 	env->env_status = ENV_RUNNABLE;
 	return 0;
@@ -363,12 +363,14 @@ sys_ipc_recv(void *dstva)
 	if((int)dstva<UTOP)
 		curenv->env_ipc_dstva = (void *)dstva;
 	curenv->env_ipc_recving = 1;
+	curenv->env_tf.tf_regs.reg_eax = 0;
 	curenv->env_status = ENV_NOT_RUNNABLE;
 	sys_yield();
 	// LAB 4: Your code here.
 	//panic("sys_ipc_recv not implemented");
 	return 0;
 }
+
 
 // Dispatches to the correct kernel function, passing the arguments.
 int32_t
