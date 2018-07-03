@@ -14,9 +14,7 @@ extern char bootstacktop[], bootstack[];
 
 extern struct PageInfo *pages;
 extern size_t npages;
-
 extern pde_t *kern_pgdir;
-
 
 /* This macro takes a kernel virtual address -- an address that points above
  * KERNBASE, where the machine's maximum 256MB of physical memory is mapped --
@@ -52,7 +50,6 @@ enum {
 };
 
 void	mem_init(void);
-
 void	page_init(void);
 struct PageInfo *page_alloc(int alloc_flags);
 void	page_free(struct PageInfo *pp);
